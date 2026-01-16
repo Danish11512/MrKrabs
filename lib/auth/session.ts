@@ -22,7 +22,7 @@ export const createSession = async (user: UserWithoutPassword): Promise<void> =>
 
 export const destroySession = async (): Promise<void> => {
   const session = await getSession()
-  session.destroy()
+  await session.destroy()
 }
 
 export const getCurrentUser = async (): Promise<UserWithoutPassword | null> => {

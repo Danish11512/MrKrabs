@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "predev": "bun run db:push",
     "build": "next build",
     "start": "next start",
+    "db:create": "bun scripts/create-database.ts",
     "db:generate": "drizzle-kit generate",
+    "db:push": "bun scripts/db-push.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
   },

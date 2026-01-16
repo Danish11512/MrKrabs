@@ -8,10 +8,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-export const LoginForm = (): JSX.Element => {
+export const SignupForm = (): JSX.Element => {
   const router = useRouter()
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -21,18 +24,24 @@ export const LoginForm = (): JSX.Element => {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+          phoneNumber: phoneNumber || undefined,
+        }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Login failed')
+        setError(data.error || 'Signup failed')
         setIsLoading(false)
         return
       }
@@ -48,11 +57,37 @@ export const LoginForm = (): JSX.Element => {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Login</CardTitle>
-        <CardDescription>Enter your credentials to access your account</CardDescription>
+        <CardTitle>Sign Up</CardTitle>
+        <CardDescription>Create a new account to get started</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name</Label>
+              <Input
+                id="firstName"
+                type="text"
+                placeholder="John"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                type="text"
+                placeholder="Doe"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -74,6 +109,21 @@ export const LoginForm = (): JSX.Element => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={8}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Must be at least 8 characters
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
+            <Input
+              id="phoneNumber"
+              type="tel"
+              placeholder="+1 (555) 123-4567"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
               disabled={isLoading}
             />
           </div>
@@ -83,12 +133,12 @@ export const LoginForm = (): JSX.Element => {
             </div>
           )}
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Logging in...' : 'Login'}
+            {isLoading ? 'Creating account...' : 'Sign Up'}
           </Button>
           <div className="text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
-            <Link href="/signup" className="text-primary hover:underline">
-              Sign up
+            Already have an account?{' '}
+            <Link href="/login" className="text-primary hover:underline">
+              Login
             </Link>
           </div>
         </form>
