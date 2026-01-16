@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FinancialConnections } from './FinancialConnections'
 import { AccountsList } from './AccountsList'
 import { TransactionsList } from './TransactionsList'
+import { QuickConnectModal } from './QuickConnectModal'
 
 export const DashboardClient = (): React.JSX.Element => {
   const { user, isLoading, error, hydrate } = useUserStore()
@@ -99,6 +100,15 @@ export const DashboardClient = (): React.JSX.Element => {
         </div>
 
         <div className="space-y-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight">Financial Connections</h2>
+              <p className="text-muted-foreground mt-1">
+                Connect your financial accounts or use Quick Connect
+              </p>
+            </div>
+            <QuickConnectModal />
+          </div>
           <FinancialConnections />
           <AccountsList />
           <TransactionsList />
