@@ -16,7 +16,12 @@ export const Header = async (): Promise<React.JSX.Element> => {
         <div className="flex items-center gap-4">
           <ThemeToggle />
           {user ? (
-            <LogoutButton />
+            <>
+              <Link href="/dashboard">
+                <Button variant="outline">Dashboard</Button>
+              </Link>
+              <LogoutButton />
+            </>
           ) : (
             <>
               <Link href="/login">

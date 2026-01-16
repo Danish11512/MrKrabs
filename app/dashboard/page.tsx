@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth/session'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { LogoutButton } from '@/components/auth/LogoutButton'
 
 const DashboardPage = async (): Promise<React.JSX.Element> => {
   const user = await getCurrentUser()
@@ -20,7 +19,6 @@ const DashboardPage = async (): Promise<React.JSX.Element> => {
               Welcome back, {user.firstName} {user.lastName}
             </p>
           </div>
-          <LogoutButton />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
