@@ -7,7 +7,7 @@ const Card = ({ className, ...props }: React.ComponentProps<"div">): React.JSX.E
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        "backdrop-blur-xl backdrop-saturate-150 bg-[var(--glass-bg-light)] dark:bg-[var(--glass-bg-dark)] text-card-foreground flex flex-col gap-6 rounded-xl border border-[var(--glass-border-light)] dark:border-[var(--glass-border-dark)] py-6 shadow-lg dark:shadow-[var(--shadow-dark)]",
         className
       )}
       {...props}

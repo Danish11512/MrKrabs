@@ -92,7 +92,7 @@ export const LoginForm = (): React.JSX.Element => {
             />
           </div>
           {error && (
-            <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+            <div className="backdrop-blur-xl backdrop-saturate-150 rounded-lg bg-destructive/15 dark:bg-destructive/20 border border-destructive/20 dark:border-destructive/30 p-3 text-sm text-destructive shadow-lg dark:shadow-[var(--shadow-dark)]">
               {error}
             </div>
           )}

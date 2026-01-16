@@ -45,6 +45,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Liquid glass effect colors */
+  --glass-bg-light: oklch(1 0 0 / 0.1);
+  --glass-bg-dark: oklch(0.2 0 0 / 0.15);
+  --glass-border-light: oklch(1 0 0 / 0.2);
+  --glass-border-dark: oklch(1 0 0 / 0.1);
+
+  /* Shadow colors for dark mode visibility - very thin outline effect */
+  --shadow-dark: 0 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 @theme inline {
@@ -83,6 +92,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-glass-bg-light: var(--glass-bg-light);
+  --color-glass-bg-dark: var(--glass-bg-dark);
+  --color-glass-border-light: var(--glass-border-light);
+  --color-glass-border-dark: var(--glass-border-dark);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -144,6 +157,15 @@ body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Liquid glass effect colors for dark mode */
+  --glass-bg-light: oklch(1 0 0 / 0.1);
+  --glass-bg-dark: oklch(0.2 0 0 / 0.15);
+  --glass-border-light: oklch(1 0 0 / 0.2);
+  --glass-border-dark: oklch(1 0 0 / 0.1);
+
+  /* Shadow colors for dark mode visibility - very thin outline effect */
+  --shadow-dark: 0 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 @layer base {
