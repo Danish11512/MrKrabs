@@ -10,8 +10,8 @@ const DashboardPage = async (): Promise<React.JSX.Element> => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="mx-auto max-w-7xl space-y-8">
+    <div className="min-h-screen bg-background">
+      <div className="px-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
