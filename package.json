@@ -21,6 +21,7 @@
     "bullmq": "^5.66.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "@faker-js/faker": "^8.4.1",
     "drizzle-orm": "^0.45.1",
     "ioredis": "^5.9.2",
     "iron-session": "^8.0.4",

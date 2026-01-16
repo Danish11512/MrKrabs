@@ -3,6 +3,9 @@
 import { useEffect } from 'react'
 import { useUserStore } from '@/lib/stores/user-store'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FinancialConnections } from './FinancialConnections'
+import { AccountsList } from './AccountsList'
+import { TransactionsList } from './TransactionsList'
 
 export const DashboardClient = (): React.JSX.Element => {
   const { user, isLoading, error, hydrate } = useUserStore()
@@ -93,6 +96,12 @@ export const DashboardClient = (): React.JSX.Element => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        <div className="space-y-8">
+          <FinancialConnections />
+          <AccountsList />
+          <TransactionsList />
         </div>
       </div>
     </div>
