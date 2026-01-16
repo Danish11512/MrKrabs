@@ -25,7 +25,7 @@ export const TransactionsList = (): React.JSX.Element => {
         params.set('cursor', nextCursor)
       }
 
-      const response = await fetch(`/api/financial/transactions?${params.toString()}`)
+      const response = await fetch(`/api/transactions?${params.toString()}`)
 
       if (!response.ok) {
         throw new Error('Failed to load transactions')
@@ -111,7 +111,7 @@ export const TransactionsList = (): React.JSX.Element => {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            No transactions found. Connect a financial provider to see transactions.
+            No transactions found. Add transactions to your accounts to get started.
           </p>
         </CardContent>
       </Card>

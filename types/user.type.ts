@@ -7,7 +7,6 @@ export interface User {
   created: Date
   lastUpdated: Date
   phoneNumber: string | null
-  validated: boolean
 }
 
 export type UserWithoutPassword = Omit<User, 'password'>

@@ -1,4 +1,4 @@
-import { getIronSession, IronSessionData } from 'iron-session'
+import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import type { UserWithoutPassword } from '@/types'
 import { sessionOptions } from './session-config'
@@ -9,9 +9,15 @@ declare module 'iron-session' {
   }
 }
 
-export const getSession = async (): Promise<IronSessionData> => {
+type Session = {
+  user?: UserWithoutPassword
+  save: () => Promise<void>
+  destroy: () => Promise<void>
+}
+
+export const getSession = async (): Promise<Session> => {
   const cookieStore = await cookies()
-  return await getIronSession(cookieStore, sessionOptions)
+  return await getIronSession(cookieStore, sessionOptions) as Session
 }
 
 export const createSession = async (user: UserWithoutPassword): Promise<void> => {

@@ -236,6 +236,13 @@ Layout Components
 
 ### Data Flow
 
+**Simplified Flow for Personal Financial Tracker:**
+
+```
+User Input → Client Component → API Route → Database
+Client Component ← Calculated State (Zustand) ← API Response
+```
+
 1. **Server Components (Default)**
    - Fetch data directly
    - Render on server
@@ -243,13 +250,16 @@ Layout Components
 
 2. **Client Components**
    - Marked with `'use client'`
-   - Handle interactivity
+   - Handle interactivity and manual data entry
    - Use hooks (useState, useEffect, etc.)
+   - Perform real-time calculations (expense summaries, balances)
+   - Update Zustand store for state management
 
 3. **API Routes**
-   - Handle mutations
+   - Handle CRUD operations (accounts, transactions)
    - Server-side operations
    - Database interactions
+   - Authentication and authorization
 
 ### State Management
 
@@ -258,27 +268,29 @@ The application uses a **dual-layer state management system**:
 1. **Client-Side State (Zustand)**
    - Fast user data lookups and UI state
    - Cached user profile data
-   - Optimistic updates
+   - Expense and income state management
+   - Real-time calculations (monthly summaries, balances)
+   - Optimistic updates for transactions
    - Auto-hydration from server session on mount
    - Located in `lib/stores/user-store.ts`
 
 2. **Server-Side State (Next.js API Routes)**
    - Source of truth for all data
    - Authentication and authorization
-   - Database operations
-   - Financial calculations
+   - Database operations (CRUD for accounts and transactions)
    - Always validate and sanitize inputs
 
 3. **State Synchronization**
    - On app load: Fetch user from `/api/auth/session` and hydrate Zustand store
    - On mutations: Update Zustand optimistically, then sync with server
+   - Real-time calculations: Client-side calculations update immediately as user enters transactions
    - Background refresh: Periodically sync store with server (every 5-10 minutes)
    - On navigation: Re-validate with server for critical pages
 
 **When to use each:**
 
-- **Zustand Store**: UI state, cached user data, optimistic updates
-- **Server API Routes**: Data fetching, authentication, financial calculations, database operations
+- **Zustand Store**: UI state, cached user data, expense/income state, real-time calculations, optimistic updates
+- **Server API Routes**: Data fetching, authentication, database operations (accounts, transactions)
 - **React Hooks**: Component-local state (useState, useEffect)
 
 ### Financial Data Handling
@@ -330,13 +342,10 @@ mrkrabs/
 │   ├── utils.ts             # Utility functions (cn helper)
 │   ├── stores/              # Zustand stores
 │   │   └── user-store.ts    # User state management
-│   └── jobs/                # Background job system
-│       ├── redis.ts         # Redis connection
-│       ├── queues.ts         # Job queue definitions
-│       ├── workers.ts        # Background workers
-│       ├── types.ts          # Job payload types
-│       └── processors/       # Job processors
-│           └── financial-calculations.ts
+│   └── db/                  # Database configuration
+│       ├── config.ts         # Database connection config
+│       ├── schema.ts         # Drizzle ORM schema
+│       └── migrations/       # Database migrations
 ├── types/                   # TypeScript type definitions
 │   ├── index.ts             # Re-exports
 │   ├── transaction.type.ts  # Transaction interfaces
@@ -445,6 +454,63 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
 ---
 
+## Personal Financial Tracker Architecture
+
+### Overview
+
+The application is a **personal financial tracker** focused on manual expense tracking, income management, and bill tracking. All calculations are performed client-side using React state and Zustand for real-time updates.
+
+### Key Features
+
+1. **Manual Data Entry**
+   - Users manually enter all transactions (expenses and income)
+   - No external API integrations
+   - Simple CRUD operations for accounts and transactions
+
+2. **Client-Side Calculations**
+   - Real-time expense summaries calculated on-demand
+   - Monthly budget tracking
+   - Account balance updates as transactions are entered
+   - Income vs expenses calculations
+
+3. **Data Model**
+   - **Users** → **Accounts** (credit cards, checking, savings) → **Transactions** (expenses/income)
+   - Simple, flat structure without provider connections
+   - User-defined account names and types
+
+4. **Real-Time Updates**
+   - Zustand store manages expense/income state
+   - Calculations update immediately as user enters data
+   - Optimistic updates for better UX
+
+### Architecture Components
+
+1. **Accounts Management**
+   - User creates accounts manually (credit cards, checking, savings)
+   - Each account has: name, type, balance, credit limit (for cards), due date
+   - Accounts are directly linked to users (no provider connections)
+
+2. **Transaction Management**
+   - Manual entry of expenses (debits) and income (credits)
+   - Each transaction has: amount, type, description, category, date, account
+   - Location fields are optional (for manual entry)
+
+3. **Calculations**
+   - Monthly expense summaries (calculated client-side)
+   - Income vs expenses charts
+   - Account balances (updated in real-time)
+   - Bills tracking (can use transactions with recurring flag)
+
+### Data Flow
+
+```
+User enters transaction → Client component updates Zustand → 
+API route saves to database → Response updates client state → 
+Real-time calculations update UI
+```
+
+---
+
 ## State Management Architecture
 
 ### Client-Side State (Zustand)
@@ -537,103 +603,6 @@ const hydrate = useUserStore((state) => state.hydrate)
    - Implement retry logic for failed syncs
    - Show user-friendly error messages
 
----
-
-## Background Jobs Architecture
-
-### Overview
-
-The application uses **BullMQ with Redis** for background job processing:
-
-- **Long-running calculations**: Portfolio valuation, transaction aggregation
-- **Scheduled tasks**: Daily reports, monthly summaries
-- **Batch processing**: Data exports, bulk operations
-
-### Architecture Components
-
-1. **Redis Connection** (`lib/jobs/redis.ts`)
-   - Centralized Redis client
-   - Connection pooling and error handling
-   - Graceful reconnection on failures
-
-2. **Job Queues** (`lib/jobs/queues.ts`)
-   - `financialCalculationQueue`: Financial calculations
-   - `portfolioValuationQueue`: Portfolio valuations
-   - `reportGenerationQueue`: Report generation
-
-3. **Workers** (`lib/jobs/workers.ts`)
-   - Process jobs from queues
-   - Configurable concurrency and rate limiting
-   - Error handling and retry logic
-
-4. **Job Processors** (`lib/jobs/processors/`)
-   - Domain-specific job processing logic
-   - Financial calculations, data aggregation, etc.
-
-5. **Job API** (`app/api/jobs/route.ts`)
-   - Submit jobs: `POST /api/jobs`
-   - Check status: `GET /api/jobs?jobId=...&type=...`
-
-### Job Types
-
-```typescript
-type JobType =
-  | 'financial-calculation'
-  | 'portfolio-valuation'
-  | 'transaction-aggregation'
-  | 'report-generation'
-  | 'data-export'
-```
-
-### Usage Example
-
-**Submitting a Job:**
-```typescript
-const response = await fetch('/api/jobs', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    type: 'financial-calculation',
-    data: {
-      calculationType: 'portfolio-value',
-      userId: currentUser.userID,
-    },
-  }),
-})
-
-const { jobId } = await response.json()
-```
-
-**Checking Job Status:**
-```typescript
-const response = await fetch(`/api/jobs?jobId=${jobId}&type=financial-calculation`)
-const { state, progress, result } = await response.json()
-```
-
-### Job Configuration
-
-Each queue has configurable options:
-- **Attempts**: Number of retries on failure
-- **Backoff**: Retry delay strategy (exponential)
-- **Concurrency**: Number of jobs processed simultaneously
-- **Rate Limiting**: Max jobs per time period
-- **Retention**: How long to keep completed/failed jobs
-
-### Worker Setup
-
-Workers are initialized in `lib/jobs/workers.ts` and should be started when the application starts. In production, workers can run in separate processes for better scalability.
-
-**Development**: Workers run in the same process as the Next.js server
-**Production**: Consider running workers in separate processes or containers
-
-### Error Handling
-
-- Jobs automatically retry on failure (configurable attempts)
-- Failed jobs are logged with error details
-- Job results include status and error messages
-- Dead letter queue for permanently failed jobs (future enhancement)
-
----
 
 ## Coding Guidelines for AI Agents
 
@@ -761,8 +730,8 @@ Before considering code complete, verify:
 - [ ] Accessibility considerations (when applicable)
 - [ ] Performance considerations (no unnecessary re-renders)
 - [ ] State management: Use Zustand for client state, API routes for server state
-- [ ] Background jobs: Proper job types, error handling, and status tracking
 - [ ] State synchronization: Proper hydration and sync strategies
+- [ ] Client-side calculations: Real-time expense summaries and balance updates
 
 ---
 
@@ -850,39 +819,26 @@ sequenceDiagram
     ClientComponent->>ZustandStore: Sync with server
 ```
 
-### Background Jobs Flow
+### Personal Financial Tracker Flow
 
 ```mermaid
 sequenceDiagram
-    participant Client
+    participant User
+    participant ClientComponent
+    participant ZustandStore
     participant APIRoute
-    participant BullMQ
-    participant Worker
     participant Database
-    participant Redis
     
-    Client->>APIRoute: POST /api/jobs (submit job)
-    APIRoute->>BullMQ: Add job to queue
-    BullMQ->>Redis: Store job
-    Redis-->>BullMQ: Job queued
-    BullMQ-->>APIRoute: Job ID
-    APIRoute-->>Client: Job ID & status
-    
-    Note over BullMQ,Worker: Background Processing
-    BullMQ->>Worker: Process job
-    Worker->>Database: Query data
-    Database-->>Worker: Data
-    Worker->>Worker: Process calculation
-    Worker->>Database: Update results
-    Worker->>Redis: Update job status
-    Worker-->>BullMQ: Job completed
-    
-    Client->>APIRoute: GET /api/jobs?jobId=...
-    APIRoute->>BullMQ: Get job status
-    BullMQ->>Redis: Query job
-    Redis-->>BullMQ: Job status & result
-    BullMQ-->>APIRoute: Job data
-    APIRoute-->>Client: Status, progress, result
+    User->>ClientComponent: Enter transaction
+    ClientComponent->>ZustandStore: Optimistic update
+    ZustandStore->>ClientComponent: Real-time calculation
+    ClientComponent->>APIRoute: POST /api/transactions
+    APIRoute->>Database: Save transaction
+    Database-->>APIRoute: Success
+    APIRoute-->>ClientComponent: Transaction data
+    ClientComponent->>ZustandStore: Sync with server
+    ZustandStore->>ClientComponent: Updated state
+    ClientComponent-->>User: Updated UI with calculations
 ```
 
 ---

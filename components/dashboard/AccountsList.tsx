@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { FinancialAccountWithConnection } from '@/types'
+import type { FinancialAccount } from '@/types'
 
 export const AccountsList = (): React.JSX.Element => {
-  const [accounts, setAccounts] = useState<FinancialAccountWithConnection[]>([])
+  const [accounts, setAccounts] = useState<FinancialAccount[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -16,7 +16,7 @@ export const AccountsList = (): React.JSX.Element => {
   const loadAccounts = async (): Promise<void> => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/financial/accounts')
+      const response = await fetch('/api/accounts')
 
       if (!response.ok) {
         throw new Error('Failed to load accounts')
@@ -55,7 +55,7 @@ export const AccountsList = (): React.JSX.Element => {
       <Card>
         <CardHeader>
           <CardTitle>Accounts</CardTitle>
-          <CardDescription>Your connected financial accounts</CardDescription>
+          <CardDescription>Your financial accounts</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">Loading accounts...</p>
@@ -69,7 +69,7 @@ export const AccountsList = (): React.JSX.Element => {
       <Card>
         <CardHeader>
           <CardTitle>Accounts</CardTitle>
-          <CardDescription>Your connected financial accounts</CardDescription>
+          <CardDescription>Your financial accounts</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-destructive">{error}</p>
@@ -83,11 +83,11 @@ export const AccountsList = (): React.JSX.Element => {
       <Card>
         <CardHeader>
           <CardTitle>Accounts</CardTitle>
-          <CardDescription>Your connected financial accounts</CardDescription>
+          <CardDescription>Your financial accounts</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            No accounts connected yet. Connect a financial provider to get started.
+            No accounts yet. Create an account to start tracking your finances.
           </p>
         </CardContent>
       </Card>
@@ -98,7 +98,7 @@ export const AccountsList = (): React.JSX.Element => {
     <Card>
       <CardHeader>
         <CardTitle>Accounts</CardTitle>
-        <CardDescription>Your connected financial accounts</CardDescription>
+        <CardDescription>Your financial accounts</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -108,14 +108,9 @@ export const AccountsList = (): React.JSX.Element => {
               className="flex items-center justify-between p-4 border rounded-lg"
             >
               <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold">
-                    {account.name || formatAccountType(account.accountType, account.accountSubtype)}
-                  </h3>
-                  <span className="text-sm text-muted-foreground">
-                    {account.connection.provider.name}
-                  </span>
-                </div>
+                <h3 className="font-semibold">
+                  {account.name}
+                </h3>
                 {account.accountNumber && (
                   <p className="text-sm text-muted-foreground mt-1">
                     {account.accountNumber}

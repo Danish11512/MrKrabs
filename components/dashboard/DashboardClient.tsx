@@ -2,11 +2,6 @@
 
 import { useEffect } from 'react'
 import { useUserStore } from '@/lib/stores/user-store'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FinancialConnections } from './FinancialConnections'
-import { AccountsList } from './AccountsList'
-import { TransactionsList } from './TransactionsList'
-import { QuickConnectModal } from './QuickConnectModal'
 
 export const DashboardClient = (): React.JSX.Element => {
   const { user, isLoading, error, hydrate } = useUserStore()
@@ -66,53 +61,6 @@ export const DashboardClient = (): React.JSX.Element => {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Information</CardTitle>
-              <CardDescription>Your account details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium">{user.email}</p>
-              </div>
-              {user.phoneNumber && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Phone</p>
-                  <p className="font-medium">{user.phoneNumber}</p>
-                </div>
-              )}
-              <div>
-                <p className="text-sm text-muted-foreground">Account Status</p>
-                <p className="font-medium">
-                  {user.validated ? 'Validated' : 'Pending Validation'}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Member Since</p>
-                <p className="font-medium">
-                  {new Date(user.created).toLocaleDateString()}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold tracking-tight">Financial Connections</h2>
-              <p className="text-muted-foreground mt-1">
-                Connect your financial accounts or use Quick Connect
-              </p>
-            </div>
-            <QuickConnectModal />
-          </div>
-          <FinancialConnections />
-          <AccountsList />
-          <TransactionsList />
-        </div>
       </div>
     </div>
   )

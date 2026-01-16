@@ -9,8 +9,6 @@ export * from './common.type'
 export * from './user.type'
 
 // Financial types
-export * from './financial-provider.type'
-export * from './provider-connection.type'
 export * from './financial-account.type'
 export * from './financial-transaction.type'
 export * from './balance-snapshot.type'

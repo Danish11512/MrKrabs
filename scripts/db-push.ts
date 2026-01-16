@@ -69,7 +69,11 @@ if (createDbExitCode !== 0) {
 console.log('🔄 Syncing database schema...')
 
 try {
-  const proc = Bun.spawn(['bunx', 'drizzle-kit', 'push'], {
+  // Use the non-interactive wrapper script that handles drizzle-kit prompts
+  // When drizzle-kit asks "Is user_id column created or renamed?", 
+  // the answer is "create column" (first option, selected by default)
+  const scriptPath = resolve(process.cwd(), 'scripts/drizzle-push-noninteractive.sh')
+  const proc = Bun.spawn(['sh', scriptPath], {
     stdio: ['inherit', 'inherit', 'inherit'],
     env: process.env,
   })
@@ -80,6 +84,7 @@ try {
     console.log('✅ Database schema synced successfully')
   } else {
     console.error('❌ Failed to sync database schema')
+    console.error('💡 If you see an interactive prompt, select "create column" (first option)')
     process.exit(exitCode)
   }
 } catch (error) {

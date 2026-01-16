@@ -26,7 +26,7 @@ export async function GET(): Promise<NextResponse> {
     // Remove password from response
     const { password: _, ...userWithoutPassword } = userData
 
-    // Add computed fields if needed (e.g., account summary, validation status)
+    // Add computed fields if needed (e.g., account summary)
     const userProfile = {
       ...userWithoutPassword,
       // Future: Add computed fields like account summary, transaction count, etc.

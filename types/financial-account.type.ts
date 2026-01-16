@@ -1,9 +1,8 @@
-import type { AccountType } from './financial-provider.type'
+import type { AccountType } from './common.type'
 
 export interface FinancialAccount {
   accountID: string
-  connectionID: string
-  providerAccountID: string
+  userID: string
   accountNumber?: string | null
   accountType: AccountType
   accountSubtype?: string | null
@@ -12,19 +11,9 @@ export interface FinancialAccount {
   creditLimit?: string | null // Decimal as string
   statementDate?: Date | null
   dueDate?: Date | null
-  name?: string | null
+  name: string // Required for user-defined account name
   created: Date
   lastUpdated: Date
-}
-
-export interface FinancialAccountWithConnection extends FinancialAccount {
-  connection: {
-    connectionID: string
-    provider: {
-      name: string
-      slug: string
-    }
-  }
 }
 
 export interface AccountSummary {

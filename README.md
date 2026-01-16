@@ -1,6 +1,6 @@
-# Financial Dashboard
+# Personal Financial Tracker
 
-A modern financial management application built with Next.js, TypeScript, Tailwind CSS, and shadcn/ui.
+A modern personal financial tracking application built with Next.js, TypeScript, Tailwind CSS, and shadcn/ui. Track your expenses, income, and bills with manual data entry and real-time calculations.
 
 ## Tech Stack
 

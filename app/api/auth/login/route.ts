@@ -51,7 +51,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       created: user.created,
       lastUpdated: user.lastUpdated,
       phoneNumber: user.phoneNumber,
-      validated: user.validated,
     }
 
     await createSession(userWithoutPassword)

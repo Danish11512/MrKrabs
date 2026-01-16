@@ -4,7 +4,6 @@ export type TransactionStatus = 'posted' | 'pending' | 'refunded'
 export interface FinancialTransaction {
   transactionID: string
   accountID: string
-  providerTransactionID: string
   amount: string // Decimal as string for precision
   type: TransactionType
   currency: string
@@ -32,7 +31,7 @@ export interface FinancialTransactionWithAccount extends FinancialTransaction {
 
 export interface TransactionFilters {
   accountId?: string
-  connectionId?: string
+  userId?: string
   startDate?: Date
   endDate?: Date
   category?: string

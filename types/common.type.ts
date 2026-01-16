@@ -3,4 +3,4 @@
 
 export type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY'
 
-export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled'
+export type AccountType = 'credit_card' | 'checking' | 'savings' | 'investment'

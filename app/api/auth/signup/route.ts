@@ -47,7 +47,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         email,
         password: hashedPassword,
         phoneNumber: phoneNumber || null,
-        validated: false,
       })
       .returning()
 
@@ -59,7 +58,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       created: newUser.created,
       lastUpdated: newUser.lastUpdated,
       phoneNumber: newUser.phoneNumber,
-      validated: newUser.validated,
     }
 
     // Create session

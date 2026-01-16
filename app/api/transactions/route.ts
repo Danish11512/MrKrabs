@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { eq, and, gte, lte, desc, asc, or } from 'drizzle-orm'
+import { eq, and, gte, lte, desc, asc, or, inArray } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { financialTransactions, financialAccounts, providerConnections } from '@/lib/db/schema'
+import { financialTransactions, financialAccounts } from '@/lib/db/schema'
 import { getCurrentUser } from '@/lib/auth/session'
-import type { TransactionListResponse, FinancialTransactionWithAccount } from '@/types'
+import type { TransactionListResponse, FinancialTransactionWithAccount, TransactionType, TransactionStatus } from '@/types'
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
@@ -17,12 +17,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const searchParams = request.nextUrl.searchParams
     const accountId = searchParams.get('accountId')
-    const connectionId = searchParams.get('connectionId')
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
     const category = searchParams.get('category')
-    const status = searchParams.get('status')
-    const type = searchParams.get('type')
+    const status = searchParams.get('status') as TransactionStatus | null
+    const type = searchParams.get('type') as TransactionType | null
     const limit = parseInt(searchParams.get('limit') || '50', 10)
     const cursor = searchParams.get('cursor')
     const sortBy = searchParams.get('sortBy') || 'date'
@@ -32,22 +31,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     let userAccountIds = await db
       .select({ accountID: financialAccounts.accountID })
       .from(financialAccounts)
-      .innerJoin(providerConnections, eq(financialAccounts.connectionID, providerConnections.connectionID))
-      .where(eq(providerConnections.userID, user.userID))
-
-    // Filter by connection if provided
-    if (connectionId) {
-      userAccountIds = await db
-        .select({ accountID: financialAccounts.accountID })
-        .from(financialAccounts)
-        .innerJoin(providerConnections, eq(financialAccounts.connectionID, providerConnections.connectionID))
-        .where(
-          and(
-            eq(providerConnections.userID, user.userID),
-            eq(providerConnections.connectionID, connectionId),
-          ),
-        )
-    }
+      .where(eq(financialAccounts.userID, user.userID))
 
     // Filter by account if provided
     if (accountId) {
@@ -66,7 +50,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Build query conditions
     const accountIdList = userAccountIds.map((a) => a.accountID)
     const conditions = [
-      or(...accountIdList.map((id) => eq(financialTransactions.accountID, id))),
+      inArray(financialTransactions.accountID, accountIdList),
     ]
 
     if (startDate) {
@@ -93,12 +77,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       conditions.push(lte(financialTransactions.transactionID, cursor))
     }
 
-    // Build query
-    let query = db
+    // Build query with sorting
+    const selectQuery = db
       .select({
         transactionID: financialTransactions.transactionID,
         accountID: financialTransactions.accountID,
-        providerTransactionID: financialTransactions.providerTransactionID,
         amount: financialTransactions.amount,
         type: financialTransactions.type,
         currency: financialTransactions.currency,
@@ -124,14 +107,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .innerJoin(financialAccounts, eq(financialTransactions.accountID, financialAccounts.accountID))
       .where(and(...conditions))
 
-    // Sorting
-    if (sortBy === 'date') {
-      query = query.orderBy(sortOrder === 'desc' ? desc(financialTransactions.transactionDate) : asc(financialTransactions.transactionDate))
-    } else if (sortBy === 'amount') {
-      query = query.orderBy(sortOrder === 'desc' ? desc(financialTransactions.amount) : asc(financialTransactions.amount))
-    }
+    // Apply sorting
+    const sortedQuery = sortBy === 'date'
+      ? selectQuery.orderBy(sortOrder === 'desc' ? desc(financialTransactions.transactionDate) : asc(financialTransactions.transactionDate))
+      : sortBy === 'amount'
+      ? selectQuery.orderBy(sortOrder === 'desc' ? desc(financialTransactions.amount) : asc(financialTransactions.amount))
+      : selectQuery.orderBy(desc(financialTransactions.transactionDate))
 
-    const transactions = await query.limit(limit + 1)
+    const transactions = await sortedQuery.limit(limit + 1)
 
     const hasMore = transactions.length > limit
     const result = hasMore ? transactions.slice(0, limit) : transactions
@@ -140,14 +123,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const response: FinancialTransactionWithAccount[] = result.map((t) => ({
       transactionID: t.transactionID,
       accountID: t.accountID,
-      providerTransactionID: t.providerTransactionID,
       amount: t.amount,
-      type: t.type as FinancialTransactionWithAccount['type'],
+      type: t.type as TransactionType,
       currency: t.currency,
       description: t.description,
       merchant: t.merchant,
       category: t.category,
-      status: t.status as FinancialTransactionWithAccount['status'],
+      status: t.status as TransactionStatus,
       transactionDate: t.transactionDate,
       postedDate: t.postedDate,
       locationCity: t.locationCity,
@@ -174,6 +156,122 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     console.error('Error fetching transactions:', error)
     return NextResponse.json(
       { error: 'Failed to fetch transactions' },
+      { status: 500 },
+    )
+  }
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 },
+      )
+    }
+
+    const body = await request.json()
+    const {
+      accountID,
+      amount,
+      type,
+      currency = 'USD',
+      description,
+      merchant,
+      category,
+      status = 'posted',
+      transactionDate,
+      postedDate,
+      locationCity,
+      locationState,
+      locationCountry,
+    } = body
+
+    // Validate required fields
+    if (!accountID || !amount || !type || !transactionDate) {
+      return NextResponse.json(
+        { error: 'accountID, amount, type, and transactionDate are required' },
+        { status: 400 },
+      )
+    }
+
+    // Verify account belongs to user
+    const [account] = await db
+      .select()
+      .from(financialAccounts)
+      .where(
+        and(
+          eq(financialAccounts.accountID, accountID),
+          eq(financialAccounts.userID, user.userID),
+        ),
+      )
+      .limit(1)
+
+    if (!account) {
+      return NextResponse.json(
+        { error: 'Account not found' },
+        { status: 404 },
+      )
+    }
+
+    // Create transaction
+    const [newTransaction] = await db
+      .insert(financialTransactions)
+      .values({
+        accountID,
+        amount,
+        type,
+        currency,
+        description: description || null,
+        merchant: merchant || null,
+        category: category || null,
+        status,
+        transactionDate: new Date(transactionDate),
+        postedDate: postedDate ? new Date(postedDate) : null,
+        locationCity: locationCity || null,
+        locationState: locationState || null,
+        locationCountry: locationCountry || null,
+      })
+      .returning()
+
+    // Fetch account details for response
+    const [accountDetails] = await db
+      .select()
+      .from(financialAccounts)
+      .where(eq(financialAccounts.accountID, accountID))
+      .limit(1)
+
+    const response: FinancialTransactionWithAccount = {
+      transactionID: newTransaction.transactionID,
+      accountID: newTransaction.accountID,
+      amount: newTransaction.amount,
+      type: newTransaction.type as TransactionType,
+      currency: newTransaction.currency,
+      description: newTransaction.description,
+      merchant: newTransaction.merchant,
+      category: newTransaction.category,
+      status: newTransaction.status as TransactionStatus,
+      transactionDate: newTransaction.transactionDate,
+      postedDate: newTransaction.postedDate,
+      locationCity: newTransaction.locationCity,
+      locationState: newTransaction.locationState,
+      locationCountry: newTransaction.locationCountry,
+      created: newTransaction.created,
+      lastUpdated: newTransaction.lastUpdated,
+      account: {
+        accountID: accountDetails!.accountID,
+        accountNumber: accountDetails!.accountNumber,
+        accountType: accountDetails!.accountType,
+        name: accountDetails!.name,
+      },
+    }
+
+    return NextResponse.json(response, { status: 201 })
+  } catch (error) {
+    console.error('Error creating transaction:', error)
+    return NextResponse.json(
+      { error: 'Failed to create transaction' },
       { status: 500 },
     )
   }
