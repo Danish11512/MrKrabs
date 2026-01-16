@@ -20,11 +20,11 @@ export const metadata: Metadata = {
   description: "A modern financial management application built with Next.js, TypeScript, and Tailwind CSS",
 };
 
-export default function RootLayout({
+const RootLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
+}>): React.JSX.Element => {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -44,5 +44,7 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }
+
+export default RootLayout

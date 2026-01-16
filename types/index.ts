@@ -1,14 +1,11 @@
 // Central type definitions
-// Domain-specific types will be organized in separate files
 // This file serves as the main export point for all types
+// Re-exports all types from domain-specific .type.ts files
 
-// Example types (to be expanded as features are added)
-export type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY'
+// Common/shared types
+export * from './common.type'
 
-export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled'
-
-// Re-export domain-specific types when they are created
-// export * from './transaction'
-// export * from './account'
-// export * from './budget'
-// export * from './common'
+// Domain-specific types (to be added as features are created)
+// export * from './transaction.type'
+// export * from './account.type'
+// export * from './budget.type'

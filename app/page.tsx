@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function Home() {
+const Home = (): React.JSX.Element => {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="mx-auto max-w-7xl space-y-8">
@@ -98,3 +98,5 @@ export default function Home() {
     </div>
   )
 }
+
+export default Home

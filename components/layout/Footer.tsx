@@ -1,4 +1,4 @@
-export function Footer() {
+export const Footer = (): React.JSX.Element => {
   return (
     <footer className="border-t bg-background">
       <div className="mx-auto max-w-7xl px-8 py-6">

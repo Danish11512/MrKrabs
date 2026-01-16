@@ -37,28 +37,48 @@ TypeScript strict mode is **required** and enabled in `tsconfig.json`:
    function processData(data: any) { ... }
    
    // ✅ Good
-   function processData(data: unknown) {
+   const processData = (data: unknown): void => {
      if (typeof data === 'string') {
        // Type narrowed to string
      }
    }
    ```
 
-2. **Explicit return types for functions**
+2. **Use `const` declarations for functions and components**
+   - All functions and components must use `const` with arrow function syntax
+   - Never use `function` declarations
+   - **Exception**: Next.js API route handlers (`GET`, `POST`, etc.) must use `export async function` as they require named exports
+   - Example:
+   ```typescript
+   // ❌ Bad
+   function calculateTotal(amounts: number[]): number {
+     return amounts.reduce((sum, amount) => sum + amount, 0)
+   }
+   
+   // ✅ Good
+   const calculateTotal = (amounts: number[]): number => {
+     return amounts.reduce((sum, amount) => sum + amount, 0)
+   }
+   
+   // ✅ Also acceptable for simple functions
+   const add = (a: number, b: number): number => a + b
+   ```
+
+3. **Explicit return types for functions**
    - All functions must have explicit return types
    - Exception: Simple arrow functions where return type is obvious
    - Example:
    ```typescript
    // ✅ Good
-   function calculateTotal(amounts: number[]): number {
+   const calculateTotal = (amounts: number[]): number => {
      return amounts.reduce((sum, amount) => sum + amount, 0)
    }
    
    // ✅ Also acceptable for simple functions
-   const add = (a: number, b: number) => a + b
+   const add = (a: number, b: number): number => a + b
    ```
 
-3. **Prefer `interface` for object shapes, `type` for unions/intersections**
+4. **Prefer `interface` for object shapes, `type` for unions/intersections**
    - Use `interface` for extensible object shapes
    - Use `type` for unions, intersections, and computed types
    - Example:
@@ -79,14 +99,14 @@ TypeScript strict mode is **required** and enabled in `tsconfig.json`:
    }
    ```
 
-4. **Branded types for financial data**
+5. **Branded types for financial data**
    - Use branded types to prevent mixing different financial units
    - Example:
    ```typescript
    type Currency = string & { __brand: 'Currency' }
    type Amount = number & { __brand: 'Amount' }
    
-   function createCurrency(value: string): Currency {
+   const createCurrency = (value: string): Currency => {
      return value as Currency
    }
    
@@ -97,9 +117,11 @@ TypeScript strict mode is **required** and enabled in `tsconfig.json`:
 
 ### Type Definitions Location
 
-- All types and interfaces are defined in the `types/` directory
+- **All interfaces must be stored in the `types/` directory**
+- Interface files must follow the naming convention: `[name].type.ts` (e.g., `transaction.type.ts`, `account.type.ts`)
 - Domain-specific types are organized by feature
 - Shared/common types are in `types/index.ts` for re-export
+- Each interface file should be grouped by domain/feature and named accordingly
 
 ---
 
@@ -109,27 +131,35 @@ TypeScript strict mode is **required** and enabled in `tsconfig.json`:
 
 ```
 types/
-├── index.ts              # Re-exports all shared types
-├── transaction.ts        # Transaction-related types
-├── account.ts            # Account-related types
-├── budget.ts             # Budget-related types
-└── common.ts             # Common/shared types
+├── index.ts                    # Re-exports all shared types
+├── transaction.type.ts         # Transaction-related interfaces
+├── account.type.ts             # Account-related interfaces
+├── budget.type.ts              # Budget-related interfaces
+└── common.type.ts              # Common/shared interfaces
 ```
+
+**Important**: All interface files must use the `.type.ts` extension and be located in the `types/` directory.
 
 ### Naming Conventions
 
-1. **PascalCase for types and interfaces**
+1. **File naming for interfaces**
+   - All interface files must be in the `types/` directory
+   - Interface files must use the format: `[name].type.ts`
+   - Examples: `transaction.type.ts`, `account.type.ts`, `budget.type.ts`
+   - Group related interfaces in the same file by domain/feature
+
+2. **PascalCase for types and interfaces**
    - `Transaction`, `Account`, `BudgetCategory`
    - Descriptive, domain-specific names
 
-2. **Type vs Interface naming**
+3. **Type vs Interface naming**
    - Interfaces: `I` prefix is **not used** (e.g., `Transaction`, not `ITransaction`)
    - Types: Use descriptive names (e.g., `TransactionStatus`, `CurrencyCode`)
 
-3. **Examples**
+4. **Examples**
 
 ```typescript
-// types/transaction.ts
+// types/transaction.type.ts
 export interface Transaction {
   id: string
   amount: number
@@ -145,29 +175,34 @@ export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled'
 export type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY'
 
 // types/index.ts
-export * from './transaction'
-export * from './account'
-export * from './budget'
-export * from './common'
+export * from './transaction.type'
+export * from './account.type'
+export * from './budget.type'
+export * from './common.type'
 ```
 
 ### Type Organization Patterns
 
-1. **Domain-specific types in separate files**
+1. **All interfaces must be in `types/` directory with `.type.ts` extension**
+   - One file per domain (transaction, account, budget, etc.)
+   - Related interfaces grouped together in the same file
+   - File naming: `[domain].type.ts` (e.g., `transaction.type.ts`)
+
+2. **Domain-specific types in separate files**
    - One file per domain (transaction, account, budget, etc.)
    - Related types grouped together
 
-2. **Shared types in `types/index.ts`**
+3. **Shared types in `types/index.ts`**
    - Re-export all types for convenient importing
-   - Use `export * from './transaction'` pattern
+   - Use `export * from './transaction.type'` pattern (note the `.type.ts` extension)
 
-3. **Usage in components**
+4. **Usage in components**
    ```typescript
    // ✅ Good - Import from types index
    import type { Transaction, TransactionStatus } from '@/types'
    
    // ✅ Also acceptable - Direct import
-   import type { Transaction } from '@/types/transaction'
+   import type { Transaction } from '@/types/transaction.type'
    ```
 
 ---
@@ -271,7 +306,8 @@ mrkrabs/
 │   └── utils.ts             # Utility functions (cn helper)
 ├── types/                   # TypeScript type definitions
 │   ├── index.ts             # Re-exports
-│   ├── transaction.ts
+│   ├── transaction.type.ts  # Transaction interfaces
+│   ├── account.type.ts      # Account interfaces
 │   └── ...
 ├── public/                  # Static assets
 └── [config files]           # Configuration files
@@ -314,8 +350,8 @@ interface TransactionCardProps {
   onEdit?: (id: string) => void
 }
 
-// 3. Component function
-export function TransactionCard({ transaction, onEdit }: TransactionCardProps): JSX.Element {
+// 3. Component function (use const, not function)
+export const TransactionCard = ({ transaction, onEdit }: TransactionCardProps): JSX.Element => {
   // Component logic
   return (
     // JSX
@@ -400,7 +436,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
    - Helps catch errors early
 
 3. **Proper type definitions**
-   - Define types in `types/` directory
+   - **All interfaces must be in `types/` directory with `.type.ts` file extension**
+   - Interface files must follow `[name].type.ts` naming convention
    - Use interfaces for object shapes
    - Use types for unions/intersections
 
@@ -413,7 +450,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
 2. **Component structure**
    - Props interface first
-   - Component function with explicit return type
+   - Component function using `const` with arrow function syntax
+   - Explicit return type
    - Clear, descriptive names
 
 3. **Server vs Client**
@@ -443,12 +481,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
 1. **Try-catch blocks for async operations**
    ```typescript
-   try {
-     const result = await fetchData()
-     return result
-   } catch (error) {
-     console.error('Failed to fetch data:', error)
-     throw new Error('Data fetch failed')
+   const fetchDataSafely = async (): Promise<Data> => {
+     try {
+       const result = await fetchData()
+       return result
+     } catch (error) {
+       console.error('Failed to fetch data:', error)
+       throw new Error('Data fetch failed')
+     }
    }
    ```
 
@@ -484,6 +524,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 Before considering code complete, verify:
 
 - [ ] TypeScript strict mode compliance (no `any`, explicit types)
+- [ ] Functions and components use `const` declarations (not `function`)
+- [ ] All interfaces in `types/` directory with `.type.ts` file extension
+- [ ] Interface files follow `[name].type.ts` naming convention
 - [ ] Types defined in `types/` directory
 - [ ] Proper import paths using `@/` aliases
 - [ ] Server/Client component usage is correct
