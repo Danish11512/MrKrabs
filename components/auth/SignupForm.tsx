@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useUserStore } from '@/lib/stores/user-store'
 
-export const SignupForm = (): JSX.Element => {
+export const SignupForm = (): React.JSX.Element => {
   const router = useRouter()
+  const setUser = useUserStore((state) => state.setUser)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -44,6 +46,18 @@ export const SignupForm = (): JSX.Element => {
         setError(data.error || 'Signup failed')
         setIsLoading(false)
         return
+      }
+
+      // Update Zustand store with user data
+      if (data.user) {
+        setUser(data.user)
+      } else {
+        // Fetch user data if not returned in signup response
+        const userResponse = await fetch('/api/auth/session')
+        const userData = await userResponse.json()
+        if (userData.user) {
+          setUser(userData.user)
+        }
       }
 
       router.push('/dashboard')

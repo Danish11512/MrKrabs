@@ -18,9 +18,11 @@
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^5.66.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.1",
+    "ioredis": "^5.9.2",
     "iron-session": "^8.0.4",
     "lucide-react": "^0.562.0",
     "next": "16.1.2",
@@ -29,11 +31,13 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "tailwind-merge": "^3.4.0",
-    "zod": "^4.3.5"
+    "zod": "^4.3.5",
+    "zustand": "^5.0.10"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^3.0.0",
+    "@types/ioredis": "^5.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

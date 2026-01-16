@@ -253,9 +253,33 @@ Layout Components
 
 ### State Management
 
-- **Default**: React Server Components (no client state needed)
-- **Interactivity**: React hooks (useState, useEffect) in Client Components
-- **Future**: Consider Zustand or React Context for complex global state if needed
+The application uses a **dual-layer state management system**:
+
+1. **Client-Side State (Zustand)**
+   - Fast user data lookups and UI state
+   - Cached user profile data
+   - Optimistic updates
+   - Auto-hydration from server session on mount
+   - Located in `lib/stores/user-store.ts`
+
+2. **Server-Side State (Next.js API Routes)**
+   - Source of truth for all data
+   - Authentication and authorization
+   - Database operations
+   - Financial calculations
+   - Always validate and sanitize inputs
+
+3. **State Synchronization**
+   - On app load: Fetch user from `/api/auth/session` and hydrate Zustand store
+   - On mutations: Update Zustand optimistically, then sync with server
+   - Background refresh: Periodically sync store with server (every 5-10 minutes)
+   - On navigation: Re-validate with server for critical pages
+
+**When to use each:**
+
+- **Zustand Store**: UI state, cached user data, optimistic updates
+- **Server API Routes**: Data fetching, authentication, financial calculations, database operations
+- **React Hooks**: Component-local state (useState, useEffect)
 
 ### Financial Data Handling
 
@@ -303,7 +327,16 @@ mrkrabs/
 │   │   └── Footer.tsx
 │   └── [feature]/           # Feature-specific components
 ├── lib/                     # Utilities and helpers
-│   └── utils.ts             # Utility functions (cn helper)
+│   ├── utils.ts             # Utility functions (cn helper)
+│   ├── stores/              # Zustand stores
+│   │   └── user-store.ts    # User state management
+│   └── jobs/                # Background job system
+│       ├── redis.ts         # Redis connection
+│       ├── queues.ts         # Job queue definitions
+│       ├── workers.ts        # Background workers
+│       ├── types.ts          # Job payload types
+│       └── processors/       # Job processors
+│           └── financial-calculations.ts
 ├── types/                   # TypeScript type definitions
 │   ├── index.ts             # Re-exports
 │   ├── transaction.type.ts  # Transaction interfaces
@@ -408,6 +441,197 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   - Browser APIs (localStorage, window, etc.)
   - React hooks (useState, useEffect, etc.)
   - Event listeners
+  - Zustand store access
+
+---
+
+## State Management Architecture
+
+### Client-Side State (Zustand)
+
+**Location**: `lib/stores/user-store.ts`
+
+The Zustand store provides fast, client-side access to user data:
+
+```typescript
+import { useUserStore } from '@/lib/stores/user-store'
+
+// In a component
+const user = useUserStore((state) => state.user)
+const setUser = useUserStore((state) => state.setUser)
+const hydrate = useUserStore((state) => state.hydrate)
+```
+
+**Store Structure:**
+- `user`: Current user data (`UserWithoutPassword | null`)
+- `isLoading`: Loading state for async operations
+- `error`: Error message if any
+- `setUser`: Update user data
+- `clearUser`: Clear user data (on logout)
+- `updateUser`: Partial update to user data
+- `hydrate`: Fetch user from server and update store
+
+**Usage Patterns:**
+
+1. **Hydration on Mount:**
+   ```typescript
+   useEffect(() => {
+     if (!user && !isLoading) {
+       hydrate()
+     }
+   }, [user, isLoading, hydrate])
+   ```
+
+2. **Optimistic Updates:**
+   ```typescript
+   // Update store immediately
+   setUser(updatedUser)
+   // Then sync with server
+   await fetch('/api/user', { method: 'PUT', body: JSON.stringify(updatedUser) })
+   ```
+
+3. **On Authentication:**
+   ```typescript
+   // After login/signup, update store
+   const response = await fetch('/api/auth/login', { ... })
+   const data = await response.json()
+   if (data.user) {
+     setUser(data.user)
+   }
+   ```
+
+### Server-Side State (API Routes)
+
+**User Data Endpoint**: `/api/user/route.ts`
+
+- Fetches complete user profile from database
+- Includes computed fields (account summary, validation status)
+- Returns cached responses with proper headers
+- Always validates authentication
+
+**Session Endpoint**: `/api/auth/session/route.ts`
+
+- Validates current session
+- Returns user data if authenticated
+- Used for initial store hydration
+
+### State Synchronization Strategy
+
+1. **Initial Load:**
+   - Server component checks auth and redirects if needed
+   - Client component hydrates Zustand store from `/api/auth/session`
+   - Store provides fast access for subsequent renders
+
+2. **Mutations:**
+   - Update Zustand store optimistically
+   - Call API route to persist changes
+   - Handle errors and rollback if needed
+
+3. **Background Sync:**
+   - Periodically refresh store (every 5-10 minutes)
+   - On navigation to critical pages
+   - On window focus (optional)
+
+4. **Error Handling:**
+   - Handle stale data scenarios
+   - Implement retry logic for failed syncs
+   - Show user-friendly error messages
+
+---
+
+## Background Jobs Architecture
+
+### Overview
+
+The application uses **BullMQ with Redis** for background job processing:
+
+- **Long-running calculations**: Portfolio valuation, transaction aggregation
+- **Scheduled tasks**: Daily reports, monthly summaries
+- **Batch processing**: Data exports, bulk operations
+
+### Architecture Components
+
+1. **Redis Connection** (`lib/jobs/redis.ts`)
+   - Centralized Redis client
+   - Connection pooling and error handling
+   - Graceful reconnection on failures
+
+2. **Job Queues** (`lib/jobs/queues.ts`)
+   - `financialCalculationQueue`: Financial calculations
+   - `portfolioValuationQueue`: Portfolio valuations
+   - `reportGenerationQueue`: Report generation
+
+3. **Workers** (`lib/jobs/workers.ts`)
+   - Process jobs from queues
+   - Configurable concurrency and rate limiting
+   - Error handling and retry logic
+
+4. **Job Processors** (`lib/jobs/processors/`)
+   - Domain-specific job processing logic
+   - Financial calculations, data aggregation, etc.
+
+5. **Job API** (`app/api/jobs/route.ts`)
+   - Submit jobs: `POST /api/jobs`
+   - Check status: `GET /api/jobs?jobId=...&type=...`
+
+### Job Types
+
+```typescript
+type JobType =
+  | 'financial-calculation'
+  | 'portfolio-valuation'
+  | 'transaction-aggregation'
+  | 'report-generation'
+  | 'data-export'
+```
+
+### Usage Example
+
+**Submitting a Job:**
+```typescript
+const response = await fetch('/api/jobs', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    type: 'financial-calculation',
+    data: {
+      calculationType: 'portfolio-value',
+      userId: currentUser.userID,
+    },
+  }),
+})
+
+const { jobId } = await response.json()
+```
+
+**Checking Job Status:**
+```typescript
+const response = await fetch(`/api/jobs?jobId=${jobId}&type=financial-calculation`)
+const { state, progress, result } = await response.json()
+```
+
+### Job Configuration
+
+Each queue has configurable options:
+- **Attempts**: Number of retries on failure
+- **Backoff**: Retry delay strategy (exponential)
+- **Concurrency**: Number of jobs processed simultaneously
+- **Rate Limiting**: Max jobs per time period
+- **Retention**: How long to keep completed/failed jobs
+
+### Worker Setup
+
+Workers are initialized in `lib/jobs/workers.ts` and should be started when the application starts. In production, workers can run in separate processes for better scalability.
+
+**Development**: Workers run in the same process as the Next.js server
+**Production**: Consider running workers in separate processes or containers
+
+### Error Handling
+
+- Jobs automatically retry on failure (configurable attempts)
+- Failed jobs are logged with error details
+- Job results include status and error messages
+- Dead letter queue for permanently failed jobs (future enhancement)
 
 ---
 
@@ -536,6 +760,9 @@ Before considering code complete, verify:
 - [ ] No console.logs in production code
 - [ ] Accessibility considerations (when applicable)
 - [ ] Performance considerations (no unnecessary re-renders)
+- [ ] State management: Use Zustand for client state, API routes for server state
+- [ ] Background jobs: Proper job types, error handling, and status tracking
+- [ ] State synchronization: Proper hydration and sync strategies
 
 ---
 
@@ -591,6 +818,71 @@ graph LR
     D --> I[Budget Interface]
     E --> J[Currency Type]
     E --> K[Common Utilities]
+```
+
+### State Management Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant ClientComponent
+    participant ZustandStore
+    participant APIRoute
+    participant Database
+    
+    User->>ClientComponent: Page Load
+    ClientComponent->>ZustandStore: Check user data
+    ZustandStore->>APIRoute: GET /api/auth/session
+    APIRoute->>Database: Query user
+    Database-->>APIRoute: User data
+    APIRoute-->>ZustandStore: User data
+    ZustandStore-->>ClientComponent: User data (cached)
+    ClientComponent-->>User: Render with user data
+    
+    Note over User,ClientComponent: User Action (e.g., Update Profile)
+    User->>ClientComponent: Update profile
+    ClientComponent->>ZustandStore: Optimistic update
+    ZustandStore-->>ClientComponent: Updated UI
+    ClientComponent->>APIRoute: PUT /api/user
+    APIRoute->>Database: Update user
+    Database-->>APIRoute: Success
+    APIRoute-->>ClientComponent: Confirmation
+    ClientComponent->>ZustandStore: Sync with server
+```
+
+### Background Jobs Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant APIRoute
+    participant BullMQ
+    participant Worker
+    participant Database
+    participant Redis
+    
+    Client->>APIRoute: POST /api/jobs (submit job)
+    APIRoute->>BullMQ: Add job to queue
+    BullMQ->>Redis: Store job
+    Redis-->>BullMQ: Job queued
+    BullMQ-->>APIRoute: Job ID
+    APIRoute-->>Client: Job ID & status
+    
+    Note over BullMQ,Worker: Background Processing
+    BullMQ->>Worker: Process job
+    Worker->>Database: Query data
+    Database-->>Worker: Data
+    Worker->>Worker: Process calculation
+    Worker->>Database: Update results
+    Worker->>Redis: Update job status
+    Worker-->>BullMQ: Job completed
+    
+    Client->>APIRoute: GET /api/jobs?jobId=...
+    APIRoute->>BullMQ: Get job status
+    BullMQ->>Redis: Query job
+    Redis-->>BullMQ: Job status & result
+    BullMQ-->>APIRoute: Job data
+    APIRoute-->>Client: Status, progress, result
 ```
 
 ---
