@@ -5,7 +5,8 @@
 // Common/shared types
 export * from './common.type'
 
-// Domain-specific types (to be added as features are created)
+// Domain-specific types
+export * from './user.type'
 // export * from './transaction.type'
 // export * from './account.type'
 // export * from './budget.type'
