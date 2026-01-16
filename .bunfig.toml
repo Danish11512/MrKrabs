@@ -1,0 +1,10 @@
+# Bun configuration file
+# This file configures Bun-specific settings for the project
+
+[install]
+# Use Bun's native package manager
+auto = true
+
+[test]
+# Test configuration (if needed in future)
+preload = []
