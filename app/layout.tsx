@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Financial Dashboard",
+  title: "Mr.Krabs",
   description: "A modern financial management application built with Next.js, TypeScript, and Tailwind CSS",
 };
 
