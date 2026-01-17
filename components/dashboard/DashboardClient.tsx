@@ -1,61 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
+import { noCompactor } from 'react-grid-layout'
+import GridLayout from 'react-grid-layout'
 import { useUserStore } from '@/lib/stores/user-store'
-import GridLayout, { type Layout, type LayoutItem, noCompactor } from 'react-grid-layout'
 import { Button } from '@/components/ui/button'
 import { GridItem } from '@/components/dashboard/GridItem'
-import { calculateNextPosition } from '@/lib/utils/grid-position'
+import { GRID_COLS, GRID_ROWS, ROW_HEIGHT } from '@/lib/constants/dashboard.constants'
+import { useContainerWidth } from '@/lib/hooks/use-container-width'
+import { useUserHydration } from '@/lib/hooks/use-user-hydration'
+import { useGridLayout } from '@/lib/hooks/use-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 
 export const DashboardClient = (): React.JSX.Element => {
-  const { user, isLoading, error, hydrate } = useUserStore()
-  const [layout, setLayout] = useState<Layout>([])
-  const [itemIdCounter, setItemIdCounter] = useState<number>(0)
+  const { user, isLoading, error } = useUserStore()
+  const containerWidth = useContainerWidth()
+  const { layout, addGridItem, updateItemLock, setLayout } = useGridLayout()
 
-  const GRID_COLS = 12
-  const GRID_ROWS = 60
-  const ROW_HEIGHT = 20 // pixels per row (60 rows × 20px = 1200px total)
-
-  useEffect(() => {
-    // Hydrate store on mount if user is not already loaded
-    if (!user && !isLoading) {
-      hydrate()
-    }
-  }, [user, isLoading, hydrate])
-
-  const handleAddGridItem = (): void => {
-    const DEFAULT_WIDTH = 4
-    const DEFAULT_HEIGHT = 4
-
-    const position = calculateNextPosition(
-      layout,
-      GRID_COLS,
-      GRID_ROWS,
-      DEFAULT_WIDTH,
-      DEFAULT_HEIGHT
-    )
-
-    if (!position) {
-      // Grid is full - could show error message or prevent adding
-      return
-    }
-
-    const newId = `grid-item-${itemIdCounter}`
-    const newItem: LayoutItem = {
-      i: newId,
-      x: position.x,
-      y: position.y,
-      w: DEFAULT_WIDTH,
-      h: DEFAULT_HEIGHT,
-      static: false,
-    }
-
-    setLayout([...layout, newItem])
-    setItemIdCounter(itemIdCounter + 1)
-  }
+  useUserHydration()
 
   if (isLoading) {
     return (
@@ -99,7 +62,7 @@ export const DashboardClient = (): React.JSX.Element => {
         variant="outline"
         size="icon"
         className="fixed top-4 right-4 z-50"
-        onClick={handleAddGridItem}
+        onClick={addGridItem}
         aria-label="Add new grid item"
       >
         <Plus className="h-4 w-4" />
@@ -107,7 +70,7 @@ export const DashboardClient = (): React.JSX.Element => {
       <GridLayout
         className="layout"
         layout={layout}
-        width={1200} // Initial width, will be responsive
+        width={containerWidth}
         gridConfig={{
           cols: GRID_COLS,
           rowHeight: ROW_HEIGHT,
@@ -116,6 +79,7 @@ export const DashboardClient = (): React.JSX.Element => {
         dragConfig={{
           enabled: true,
         }}
+        // Note: Static items (locked) automatically prevent collision - other items cannot overlap them
         resizeConfig={{
           enabled: false, // Start with resize disabled, enable per-item later
         }}
@@ -130,9 +94,7 @@ export const DashboardClient = (): React.JSX.Element => {
               h={item.h}
               isLocked={item.static ?? false}
               onLockChange={(locked) => {
-                setLayout(layout.map(l => 
-                  l.i === item.i ? { ...l, static: locked } : l
-                ))
+                updateItemLock(item.i, locked)
               }}
             >
               <p className="text-muted-foreground">New Item</p>
