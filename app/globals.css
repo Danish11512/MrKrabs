@@ -176,3 +176,38 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Override react-grid-layout drag styles - remove red/tracing colors */
+.react-grid-item.react-draggable-dragging {
+  outline: none !important;
+  border-color: var(--glass-border-light) !important;
+}
+
+.dark .react-grid-item.react-draggable-dragging {
+  border-color: var(--glass-border-dark) !important;
+}
+
+/* Remove any red borders, outlines, or background colors during drag */
+.react-grid-item.react-draggable-dragging {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Remove placeholder/tracing styles - make it invisible */
+.react-grid-placeholder {
+  background: transparent !important;
+  border: none !important;
+  opacity: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Remove any red or colored borders from react-grid-layout */
+.react-grid-item {
+  outline: none !important;
+}
+
+.react-grid-item:focus,
+.react-grid-item:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}

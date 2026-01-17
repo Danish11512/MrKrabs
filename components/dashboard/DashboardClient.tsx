@@ -3,15 +3,16 @@
 import { Plus } from 'lucide-react'
 import { noCompactor } from 'react-grid-layout'
 import GridLayout from 'react-grid-layout'
-import { useUserStore } from '@/lib/stores/user-store'
+import 'react-grid-layout/css/styles.css'
+import 'react-resizable/css/styles.css'
 import { Button } from '@/components/ui/button'
 import { GridItem } from '@/components/dashboard/GridItem'
 import { GRID_COLS, GRID_ROWS, ROW_HEIGHT } from '@/lib/constants/dashboard.constants'
+import { validateLayout } from '@/lib/utils/grid-position'
 import { useContainerWidth } from '@/lib/hooks/use-container-width'
 import { useUserHydration } from '@/lib/hooks/use-user-hydration'
 import { useGridLayout } from '@/lib/hooks/use-grid-layout'
-import 'react-grid-layout/css/styles.css'
-import 'react-resizable/css/styles.css'
+import { useUserStore } from '@/lib/stores/user-store'
 
 export const DashboardClient = (): React.JSX.Element => {
   const { user, isLoading, error } = useUserStore()
@@ -84,7 +85,21 @@ export const DashboardClient = (): React.JSX.Element => {
           enabled: false, // Start with resize disabled, enable per-item later
         }}
         compactor={noCompactor} // No auto-compaction (items stay at fixed positions)
-        onLayoutChange={(newLayout) => setLayout(newLayout)}
+        onLayoutChange={(newLayout) => {
+          // Always validate layout to prevent overlaps - this runs during drag and on stop
+          const validatedLayout = validateLayout(newLayout, GRID_COLS, GRID_ROWS)
+          const validatedOverlaps = validatedLayout.filter((item, idx) => {
+            return validatedLayout.some((other, otherIdx) => {
+              if (idx === otherIdx) return false
+              return item.x < other.x + other.w && item.x + item.w > other.x &&
+                     item.y < other.y + other.h && item.y + item.h > other.y
+            })
+          })
+          // Only update layout if validation removed overlaps or layout is valid
+          if (validatedOverlaps.length === 0) {
+            setLayout(validatedLayout)
+          }
+        }}
       >
         {layout.map((item) => (
           <div key={item.i}>

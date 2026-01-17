@@ -35,7 +35,17 @@ export const GridItem = ({
       data-grid-item-height={h}
       data-grid-item-locked={isLocked}
       className={cn(
-        'group backdrop-blur-xl backdrop-saturate-150 bg-[oklch(0.85_0_0/0.25)] dark:bg-[oklch(0.4_0_0/0.3)] text-card-foreground flex flex-col rounded-xl border border-[var(--glass-border-light)] dark:border-[var(--glass-border-dark)] p-6 shadow-lg dark:shadow-[var(--shadow-dark)] h-full w-full relative',
+        'group backdrop-blur-xl backdrop-saturate-150 backdrop-brightness-110 backdrop-contrast-125',
+        'bg-[oklch(0.85_0_0/0.12)] dark:bg-[oklch(0.4_0_0/0.15)]',
+        'text-card-foreground flex flex-col rounded-xl',
+        'border border-[var(--glass-border-light)] dark:border-[var(--glass-border-dark)]',
+        'shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3),var(--shadow-dark)]',
+        'before:content-[""] before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-br before:from-white/10 before:to-transparent before:opacity-50 dark:before:from-white/5 before:pointer-events-none',
+        'after:content-[""] after:absolute after:inset-0 after:rounded-xl after:bg-gradient-to-tr after:from-transparent after:to-black/5 dark:after:to-transparent after:pointer-events-none',
+        'p-6 h-full w-full relative overflow-hidden',
+        'transition-all duration-300 ease-out',
+        'hover:shadow-[0_12px_40px_0_rgba(0,0,0,0.15)] dark:hover:shadow-[0_12px_40px_0_rgba(0,0,0,0.4),var(--shadow-dark)]',
+        'hover:backdrop-blur-2xl hover:backdrop-saturate-200',
         className
       )}
     >

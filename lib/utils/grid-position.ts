@@ -16,6 +16,83 @@ const hasCollision = (
   )
 }
 
+export const validateLayout = (
+  layout: Layout,
+  cols: number,
+  maxRows: number
+): Layout => {
+  // Remove overlaps by keeping static items and resolving conflicts for non-static items
+  const validated: Layout = []
+  const processed = new Set<string>()
+
+  // First, add all static items (they have priority and can't be moved)
+  for (const item of layout) {
+    if (item.static) {
+      validated.push(item)
+      processed.add(item.i)
+    }
+  }
+
+  // Then process non-static items, preserving order to maintain drag behavior
+  for (const item of layout) {
+    // Skip if item is already processed (static items)
+    if (processed.has(item.i)) {
+      continue
+    }
+
+    // Check for overlaps with already validated items (including static)
+    const overlappingItem = validated.find((existingItem) =>
+      hasCollision(existingItem, item.x, item.y, item.w, item.h)
+    )
+
+    if (overlappingItem) {
+      // If overlapping with a static item, must move this item
+      if (overlappingItem.static) {
+        const newPosition = calculateNextPosition(
+          validated,
+          cols,
+          maxRows,
+          item.w,
+          item.h
+        )
+        if (newPosition) {
+          validated.push({
+            ...item,
+            x: newPosition.x,
+            y: newPosition.y,
+          })
+        }
+        // If no position found, skip this item (grid is full)
+      } else {
+        // Both are non-static - keep the one that was processed first (earlier in array)
+        // The later one needs to be repositioned
+        const newPosition = calculateNextPosition(
+          validated,
+          cols,
+          maxRows,
+          item.w,
+          item.h
+        )
+        if (newPosition) {
+          validated.push({
+            ...item,
+            x: newPosition.x,
+            y: newPosition.y,
+          })
+        }
+        // If no position found, skip this item
+      }
+    } else {
+      // No overlap, add item as-is
+      validated.push(item)
+    }
+
+    processed.add(item.i)
+  }
+
+  return validated
+}
+
 export const calculateNextPosition = (
   layout: Layout,
   cols: number,
