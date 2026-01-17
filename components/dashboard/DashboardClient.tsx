@@ -1,10 +1,18 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useUserStore } from '@/lib/stores/user-store'
+import GridLayout, { type Layout, type LayoutItem, noCompactor } from 'react-grid-layout'
+import 'react-grid-layout/css/styles.css'
+import 'react-resizable/css/styles.css'
 
 export const DashboardClient = (): React.JSX.Element => {
   const { user, isLoading, error, hydrate } = useUserStore()
+  const [layout, setLayout] = useState<Layout>([])
+
+  const GRID_COLS = 12
+  const GRID_ROWS = 60
+  const ROW_HEIGHT = 20 // pixels per row (60 rows × 20px = 1200px total)
 
   useEffect(() => {
     // Hydrate store on mount if user is not already loaded
@@ -50,18 +58,27 @@ export const DashboardClient = (): React.JSX.Element => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="px-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground mt-2">
-              Welcome back, {user.firstName} {user.lastName}
-            </p>
-          </div>
-        </div>
-
-      </div>
+    <div className="min-h-screen bg-background p-4">
+      <GridLayout
+        className="layout"
+        layout={layout}
+        width={1200} // Initial width, will be responsive
+        gridConfig={{
+          cols: GRID_COLS,
+          rowHeight: ROW_HEIGHT,
+          maxRows: GRID_ROWS,
+        }}
+        dragConfig={{
+          enabled: true,
+        }}
+        resizeConfig={{
+          enabled: false, // Start with resize disabled, enable per-item later
+        }}
+        compactor={noCompactor} // No auto-compaction (items stay at fixed positions)
+        onLayoutChange={(newLayout) => setLayout(newLayout)}
+      >
+        {null}
+      </GridLayout>
     </div>
   )
 }
