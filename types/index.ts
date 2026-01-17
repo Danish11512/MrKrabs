@@ -7,8 +7,3 @@ export * from './common.type'
 
 // Domain-specific types
 export * from './user.type'
-
-// Financial types
-export * from './financial-account.type'
-export * from './financial-transaction.type'
-export * from './balance-snapshot.type'

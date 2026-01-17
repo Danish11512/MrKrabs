@@ -15,6 +15,13 @@
       "when": 1768601752562,
       "tag": "0001_amused_infant_terrible",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768608782772,
+      "tag": "0002_sturdy_mole_man",
+      "breakpoints": true
     }
   ]
 }
