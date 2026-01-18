@@ -7,6 +7,7 @@ import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { Button } from '@/components/ui/button'
 import { GridItem } from '@/components/dashboard/GridItem'
+
 import { GRID_COLS, GRID_ROWS, ROW_HEIGHT } from '@/lib/constants/dashboard.constants'
 import { validateLayout } from '@/lib/utils/grid-position'
 import { useContainerWidth } from '@/lib/hooks/use-container-width'
@@ -15,11 +16,22 @@ import { useGridLayout } from '@/lib/hooks/use-grid-layout'
 import { useUserStore } from '@/lib/stores/user-store'
 
 export const DashboardClient = (): React.JSX.Element => {
-  const { user, isLoading, error } = useUserStore()
+  const { user, isLoading: userLoading, error: userError } = useUserStore()
   const containerWidth = useContainerWidth()
-  const { layout, addGridItem, updateItemLock, setLayout } = useGridLayout()
+  const {
+    layout,
+    itemMetadata,
+    isLoading: layoutLoading,
+    error: layoutError,
+    addGridItem,
+    updateItemLock,
+    setLayout,
+  } = useGridLayout()
 
   useUserHydration()
+
+  const isLoading = userLoading || layoutLoading
+  const error = userError || layoutError
 
   if (isLoading) {
     return (
@@ -63,7 +75,7 @@ export const DashboardClient = (): React.JSX.Element => {
         variant="outline"
         size="icon"
         className="fixed top-4 right-4 z-50"
-        onClick={addGridItem}
+        onClick={() => addGridItem()}
         aria-label="Add new grid item"
       >
         <Plus className="h-4 w-4" />
@@ -101,21 +113,24 @@ export const DashboardClient = (): React.JSX.Element => {
           }
         }}
       >
-        {layout.map((item) => (
-          <div key={item.i}>
-            <GridItem
-              id={item.i}
-              w={item.w}
-              h={item.h}
-              isLocked={item.static ?? false}
-              onLockChange={(locked) => {
-                updateItemLock(item.i, locked)
-              }}
-            >
-              <p className="text-muted-foreground">New Item</p>
-            </GridItem>
-          </div>
-        ))}
+        {layout.map((item) => {
+          const metadata = itemMetadata.get(item.i)
+          return (
+            <div key={item.i}>
+              <GridItem
+                id={item.i}
+                w={item.w}
+                h={item.h}
+                isLocked={item.static ?? false}
+                onLockChange={(locked) => {
+                  updateItemLock(item.i, locked)
+                }}
+                itemType={metadata?.itemType}
+                content={metadata?.content}
+              />
+            </div>
+          )
+        })}
       </GridLayout>
     </div>
   )

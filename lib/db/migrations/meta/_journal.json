@@ -22,6 +22,13 @@
       "when": 1768608782772,
       "tag": "0002_sturdy_mole_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1768731565269,
+      "tag": "0003_old_madame_web",
+      "breakpoints": true
     }
   ]
 }

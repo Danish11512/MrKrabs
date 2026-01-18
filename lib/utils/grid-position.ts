@@ -22,7 +22,7 @@ export const validateLayout = (
   maxRows: number
 ): Layout => {
   // Remove overlaps by keeping static items and resolving conflicts for non-static items
-  const validated: Layout = []
+  const validated: LayoutItem[] = []
   const processed = new Set<string>()
 
   // First, add all static items (they have priority and can't be moved)
@@ -49,7 +49,7 @@ export const validateLayout = (
       // If overlapping with a static item, must move this item
       if (overlappingItem.static) {
         const newPosition = calculateNextPosition(
-          validated,
+          validated as Layout,
           cols,
           maxRows,
           item.w,
@@ -67,7 +67,7 @@ export const validateLayout = (
         // Both are non-static - keep the one that was processed first (earlier in array)
         // The later one needs to be repositioned
         const newPosition = calculateNextPosition(
-          validated,
+          validated as Layout,
           cols,
           maxRows,
           item.w,
@@ -90,7 +90,7 @@ export const validateLayout = (
     processed.add(item.i)
   }
 
-  return validated
+  return validated as Layout
 }
 
 export const calculateNextPosition = (

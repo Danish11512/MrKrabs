@@ -6,6 +6,57 @@ import type { GridItemProps } from '@/types/dashboard.type'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
+const renderItemContent = (itemType?: string, content?: { accountId?: string; limit?: number; note?: string }) => {
+  if (!itemType) {
+    return <p className="text-muted-foreground">New Item</p>
+  }
+
+  switch (itemType) {
+    case 'account_balance':
+      // TODO: Read from account store using content.accountId when store is available
+      return (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold">Account Balance</h3>
+          {content?.accountId ? (
+            <p className="text-xs text-muted-foreground">Account ID: {content.accountId}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">No account selected</p>
+          )}
+        </div>
+      )
+    case 'transaction_list':
+      // TODO: Read from transaction store using content.accountId when store is available
+      return (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold">Transaction List</h3>
+          {content?.accountId ? (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Account ID: {content.accountId}</p>
+              {content.limit && (
+                <p className="text-xs text-muted-foreground">Limit: {content.limit}</p>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">No account selected</p>
+          )}
+        </div>
+      )
+    case 'note':
+      return (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold">Note</h3>
+          {content?.note ? (
+            <p className="text-sm">{content.note}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">No note content</p>
+          )}
+        </div>
+      )
+    default:
+      return <p className="text-muted-foreground">Unknown item type</p>
+  }
+}
+
 export const GridItem = ({
   children,
   w,
@@ -14,6 +65,8 @@ export const GridItem = ({
   isLocked: initialIsLocked = false,
   onLockChange,
   className,
+  itemType,
+  content,
 }: GridItemProps): React.JSX.Element => {
   const [isLocked, setIsLocked] = useState<boolean>(initialIsLocked)
 
@@ -62,7 +115,7 @@ export const GridItem = ({
           <Unlock className="h-4 w-4" />
         )}
       </Button>
-      {children}
+      {children || renderItemContent(itemType, content)}
     </div>
   )
 }
